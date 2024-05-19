@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-// import { typeBgClasses, typeTextClasses } from "@/lib/PokemonsThemes";
+import { typeBgClasses, typeTextClasses } from "@/lib/PokemonsThemes";
 
 const PokemonStore = () => {
   const [pokemons, setPokemons] = useState([]);
@@ -63,41 +63,41 @@ const PokemonStore = () => {
     fetchPokemons();
   };
 
-  const typeBgClasses = {
-    grass: "bg-gradient-to-t from-grassbg to-[#14171b]",
-    poison: "bg-gradient-to-t from-poisonbg to-[#14171b]",
-    water: "bg-gradient-to-t from-waterbg to-[#14171b]",
-    fire: "bg-gradient-to-t from-firebg to-[#14171b]",
-    bug: "bg-gradient-to-t from-bugbg to-[#14171b]",
-    normal: "bg-gradient-to-t from-normalbg to-[#14171b]",
-    electric: "bg-gradient-to-t from-electricbg to-[#14171b]",
-    ground: "bg-gradient-to-t from-groundbg to-[#14171b]",
-    fairy: "bg-gradient-to-t from-fairybg to-[#14171b]",
-    fighting: "bg-gradient-to-t from-fightingbg to-[#14171b]",
-    psychic: "bg-gradient-to-t from-psychicbg to-[#14171b]",
-    rock: "bg-gradient-to-t from-rockbg to-[#14171b]",
-    ghost: "bg-gradient-to-t from-ghostbg to-[#14171b]",
-    ice: "bg-gradient-to-t from-icebg to-[#14171b]",
-    dragon: "bg-gradient-to-t from-dragonbg to-[#14171b]",
-  };
+  // const typeBgClasses = {
+  //   grass: "bg-gradient-to-t from-grassbg to-[#14171b]",
+  //   poison: "bg-gradient-to-t from-poisonbg to-[#14171b]",
+  //   water: "bg-gradient-to-t from-waterbg to-[#14171b]",
+  //   fire: "bg-gradient-to-t from-firebg to-[#14171b]",
+  //   bug: "bg-gradient-to-t from-bugbg to-[#14171b]",
+  //   normal: "bg-gradient-to-t from-normalbg to-[#14171b]",
+  //   electric: "bg-gradient-to-t from-electricbg to-[#14171b]",
+  //   ground: "bg-gradient-to-t from-groundbg to-[#14171b]",
+  //   fairy: "bg-gradient-to-t from-fairybg to-[#14171b]",
+  //   fighting: "bg-gradient-to-t from-fightingbg to-[#14171b]",
+  //   psychic: "bg-gradient-to-t from-psychicbg to-[#14171b]",
+  //   rock: "bg-gradient-to-t from-rockbg to-[#14171b]",
+  //   ghost: "bg-gradient-to-t from-ghostbg to-[#14171b]",
+  //   ice: "bg-gradient-to-t from-icebg to-[#14171b]",
+  //   dragon: "bg-gradient-to-t from-dragonbg to-[#14171b]",
+  // };
 
-  const typeTextClasses = {
-    grass: "text-grasstxt",
-    poison: "text-poisontxt",
-    water: "text-watertxt",
-    fire: "text-firetxt",
-    bug: "text-bugtxt",
-    normal: "text-normaltxt",
-    electric: "text-electrictxt",
-    ground: "text-groundtxt",
-    fairy: "text-fairytxt",
-    fighting: "text-fightingtxt",
-    psychic: "text-psychictxt",
-    rock: "text-rocktxt",
-    ghost: "text-ghosttxt",
-    ice: "text-icetxt",
-    dragon: "text-dragontxt",
-  };
+  // const typeTextClasses = {
+  //   grass: "text-grasstxt",
+  //   poison: "text-poisontxt",
+  //   water: "text-watertxt",
+  //   fire: "text-firetxt",
+  //   bug: "text-bugtxt",
+  //   normal: "text-normaltxt",
+  //   electric: "text-electrictxt",
+  //   ground: "text-groundtxt",
+  //   fairy: "text-fairytxt",
+  //   fighting: "text-fightingtxt",
+  //   psychic: "text-psychictxt",
+  //   rock: "text-rocktxt",
+  //   ghost: "text-ghosttxt",
+  //   ice: "text-icetxt",
+  //   dragon: "text-dragontxt",
+  // };
 
   return (
     <div>
