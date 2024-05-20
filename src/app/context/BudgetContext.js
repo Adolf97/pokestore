@@ -18,25 +18,36 @@ export const BudgetProvider = ({ children }) => {
   }, []);
 
   const handlePurchaseMXN = (pokemon) => {
-    const price = parseFloat(pokemon.firstPrice.price);
-    setBudget((prevBudget) => prevBudget - price);
+    const priceInMXN = parseFloat(pokemon.firstPrice.price);
+    const pokemonToSave = { ...pokemon, priceInMXN };
+    setBudget((prevBudget) => prevBudget - priceInMXN);
     setPurchasedPokemons((prevPokemons) => {
-      const newPokemons = [...prevPokemons, pokemon];
+      const newPokemons = [...prevPokemons, pokemonToSave];
       localStorage.setItem("purchasedPokemons", JSON.stringify(newPokemons));
       return newPokemons;
     });
   };
 
   const handlePurchaseForEx = (pokemon, convertedPrice) => {
-    if (convertedPrice <= budget) {
-      setBudget((prevBudget) => prevBudget - convertedPrice);
-      setPurchasedPokemons((prevPokemons) => {
-        const newPokemons = [...prevPokemons, pokemon];
-        localStorage.setItem("purchasedPokemons", JSON.stringify(newPokemons));
-        return newPokemons;
-      });
-    } else {
-      alert("Dinero insuficiente");
+    try {
+      const priceInMXN = parseFloat(convertedPrice);
+      if (priceInMXN <= budget) {
+        setBudget((prevBudget) => prevBudget - priceInMXN);
+        const pokemonToSave = { ...pokemon, priceInMXN };
+        setPurchasedPokemons((prevPokemons) => {
+          const newPokemons = [...prevPokemons, pokemonToSave];
+          localStorage.setItem(
+            "purchasedPokemons",
+            JSON.stringify(newPokemons)
+          );
+          return newPokemons;
+        });
+      } else {
+        alert("Dinero insuficiente");
+      }
+    } catch (error) {
+      console.error("Error converting currency:", error);
+      alert("Error al convertir la moneda");
     }
   };
 
