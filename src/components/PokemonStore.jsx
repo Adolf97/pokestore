@@ -1,16 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { typeBgClasses, typeTextClasses } from "@/lib/PokemonsThemes";
+import { typeBgClasses, typeTextClasses } from "../lib/PokemonsThemes";
+import { useBudget } from "../app/context/BudgetContext";
 
 const PokemonStore = () => {
-  const [pokemons, setPokemons] = useState([]);
-  const [loadedPokemonsCount, setLoadedPokemonsCount] = useState(0);
+  const { budget, handlePurchaseMXN, handlePurchaseForEx, purchasedPokemons } = useBudget();
 
-  const currencies = ["USD", "EUR", "JYP", "INR"];
+  const [allPokemons, setAllPokemons] = useState([]);
+  const [displayedPokemons, setDisplayedPokemons] = useState([]);
+  const [loadedPokemonsCount, setLoadedPokemonsCount] = useState(0);
+  const [searchPokemon, setSearchPokemon] = useState("");
+
+  const currencies = ["USD", "EUR", "JPY", "INR"];
 
   const getRandomPrice = () => {
-    return (Math.random() * 300).toFixed(2);
+    return (Math.random() * 200 + 100).toFixed(2);
   };
 
   const getRandomCurrency = () => {
@@ -20,7 +25,7 @@ const PokemonStore = () => {
   const fetchPokemons = async () => {
     try {
       const response = await fetch(
-        `https://pokeapi.co/api/v2/pokemon?limit=10&offset=${loadedPokemonsCount}`
+        `https://pokeapi.co/api/v2/pokemon?limit=600`
       );
       const data = await response.json();
       const pokemonDetails = await Promise.all(
@@ -48,8 +53,10 @@ const PokemonStore = () => {
           };
         })
       );
-      setPokemons((prevPokemons) => [...prevPokemons, ...pokemonDetails]);
-      setLoadedPokemonsCount((prevCount) => prevCount + 10);
+
+      setAllPokemons(pokemonDetails);
+      setDisplayedPokemons(pokemonDetails.slice(0, 10));
+      setLoadedPokemonsCount(10);
     } catch (error) {
       console.error("Error fetching pokemons:", error);
     }
@@ -60,49 +67,87 @@ const PokemonStore = () => {
   }, []);
 
   const loadMorePokemons = () => {
-    fetchPokemons();
+    const nextPokemons = allPokemons.slice(
+      loadedPokemonsCount,
+      loadedPokemonsCount + 10
+    );
+    setDisplayedPokemons((prevPokemons) => [...prevPokemons, ...nextPokemons]);
+    setLoadedPokemonsCount((prevCount) => prevCount + 10);
   };
 
-  // const typeBgClasses = {
-  //   grass: "bg-gradient-to-t from-grassbg to-[#14171b]",
-  //   poison: "bg-gradient-to-t from-poisonbg to-[#14171b]",
-  //   water: "bg-gradient-to-t from-waterbg to-[#14171b]",
-  //   fire: "bg-gradient-to-t from-firebg to-[#14171b]",
-  //   bug: "bg-gradient-to-t from-bugbg to-[#14171b]",
-  //   normal: "bg-gradient-to-t from-normalbg to-[#14171b]",
-  //   electric: "bg-gradient-to-t from-electricbg to-[#14171b]",
-  //   ground: "bg-gradient-to-t from-groundbg to-[#14171b]",
-  //   fairy: "bg-gradient-to-t from-fairybg to-[#14171b]",
-  //   fighting: "bg-gradient-to-t from-fightingbg to-[#14171b]",
-  //   psychic: "bg-gradient-to-t from-psychicbg to-[#14171b]",
-  //   rock: "bg-gradient-to-t from-rockbg to-[#14171b]",
-  //   ghost: "bg-gradient-to-t from-ghostbg to-[#14171b]",
-  //   ice: "bg-gradient-to-t from-icebg to-[#14171b]",
-  //   dragon: "bg-gradient-to-t from-dragonbg to-[#14171b]",
-  // };
+  const handleSearch = (event) => {
+    setSearchPokemon(event.target.value);
+  };
 
-  // const typeTextClasses = {
-  //   grass: "text-grasstxt",
-  //   poison: "text-poisontxt",
-  //   water: "text-watertxt",
-  //   fire: "text-firetxt",
-  //   bug: "text-bugtxt",
-  //   normal: "text-normaltxt",
-  //   electric: "text-electrictxt",
-  //   ground: "text-groundtxt",
-  //   fairy: "text-fairytxt",
-  //   fighting: "text-fightingtxt",
-  //   psychic: "text-psychictxt",
-  //   rock: "text-rocktxt",
-  //   ghost: "text-ghosttxt",
-  //   ice: "text-icetxt",
-  //   dragon: "text-dragontxt",
-  // };
+  const filteredPokemons = allPokemons.filter((pokemon) =>
+    pokemon.name.toLowerCase().includes(searchPokemon.toLowerCase())
+  );
+
+  const handleBuyInMXN = (pokemon) => {
+    const priceMXN = pokemon.firstPrice.price;
+    if (priceMXN > budget) {
+      alert("Dinero insuficiente");
+    } else if (pokemonAlreadyPurchased(pokemon)) {
+      alert("Ya compraste este pokemon");
+    } else {
+      handlePurchaseMXN(pokemon);
+      savePokemonToLocalStorage(pokemon);
+    }
+  };
+
+  const handleBuyInForEx = async (pokemon, currency) => {
+    try {
+      const convertedPrice = await convertCurrencyToMXN(
+        pokemon.secondPrice.price,
+        currency
+      );
+      if (convertedPrice > budget) {
+        alert("Dinero insuficiente");
+      } else if (pokemonAlreadyPurchased(pokemon)) {
+        alert("Ya compraste este pokemon");
+      } else {
+        handlePurchaseForEx(pokemon, convertedPrice);
+        savePokemonToLocalStorage(pokemon, currency);
+      }
+    } catch (error) {
+      console.error("Error converting currency:", error);
+      alert("Error al convertir la moneda");
+    }
+  };
+
+  const convertCurrencyToMXN = async (price, currency) => {
+    const response = await fetch(
+      `https://api.exchangerate-api.com/v4/latest/${currency}`
+    );
+    const data = await response.json();
+    const convertedPrice = price * data.rates.MXN;
+    return convertedPrice;
+  };
+
+  const savePokemonToLocalStorage = (pokemon) => {
+    const savedPokemons = JSON.parse(localStorage.getItem("pokemons")) || [];
+    savedPokemons.push(pokemon);
+    localStorage.setItem("pokemons", JSON.stringify(savedPokemons));
+  };
+
+  const pokemonAlreadyPurchased = (pokemon) => {
+    const savedPokemons = JSON.parse(localStorage.getItem("pokemons")) || [];
+    return savedPokemons.some((p) => p.id === pokemon.id);
+  };
 
   return (
-    <div>
-      <div className="w-full md:w-[90vw] grid grid-cols-4 justify-between items-center gap-5 mb-8">
-        {pokemons.map((pokemon) => (
+    <section>
+      <div className="w-full md:w-[90vw] flex justify-between items-center mb-5">
+        <input
+          className="bg-[#0d0e12] w-auto rounded-lg border-[2px] border-[#181b21] hover:cursor-pointer text-[#fbfbfb] py-2 px-3 placeholder:text-[#fbfbfb]"
+          type="search"
+          placeholder="Enter a Pokemon name"
+          value={searchPokemon}
+          onChange={handleSearch}
+        />
+      </div>
+      <div className="w-full md:w-[90vw] grid grid-cols-1 md:grid-cols-4 justify-between items-center gap-5 mb-8">
+        {filteredPokemons.slice(0, loadedPokemonsCount).map((pokemon) => (
           <div
             key={pokemon.id}
             className="group relative flex flex-col justify-center items-center w-full h-auto rounded-lg border-[2px] border-[#181b21] overflow-hidden hover:cursor-pointer"
@@ -118,7 +163,7 @@ const PokemonStore = () => {
                 alt={pokemon.name}
               />
             </div>
-            <div className="absolute w-full h-[120px] bottom-0 right-0 py-3 px-4 flex flex-col bg-[#0d0e12] text-[#fbfbfb] group-hover:h-[180px] transition-all">
+            <div className="absolute w-full h-[120px] bottom-0 right-0 py-2 px-4 flex flex-col bg-[#0d0e12] text-[#fbfbfb] group-hover:h-[210px] transition-all">
               <h3 className="capitalize text-sm mb-2">{pokemon.name}</h3>
               <div className="flex gap-2 mb-2">
                 {pokemon.types.map((type, index) => (
@@ -134,16 +179,59 @@ const PokemonStore = () => {
               </div>
               <div className="w-full flex justify-between items-end mb-5">
                 <div>
-                  <span className="text-xl font-bold tracking-wider mr-1">{pokemon.firstPrice.price}</span>
-                  <span className="text-base font-medium">{pokemon.firstPrice.currency}</span>
+                  <span className="text-xl font-bold tracking-wider mr-1">
+                    {pokemon.firstPrice.price}
+                  </span>
+                  <span className="text-base font-medium">
+                    {pokemon.firstPrice.currency}
+                  </span>
                 </div>
                 <div className="text-gray-400">
-                  <span className="text-xs font-medium mr-1">{pokemon.secondPrice.price}</span>
-                  <span className="text-xs font-medium">{pokemon.secondPrice.currency}</span>
+                  <span className="text-xs font-medium mr-1">
+                    {pokemon.secondPrice.price}
+                  </span>
+                  <span className="text-xs font-medium">
+                    {pokemon.secondPrice.currency}
+                  </span>
                 </div>
               </div>
               <div className="w-full">
-                <button className="w-full bg-gradient-to-r from-[#739443] to-[#6fb312] text-white font-semibold py-2 px-4 rounded-lg text-sm tracking-wider">Comprar</button>
+                {pokemonAlreadyPurchased(pokemon) ? (
+                  <>
+                  <button disabled className="w-full text-white font-semibold py-2 rounded-lg text-sm tracking-wider bg-blue-500">Pokemon adquirido</button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleBuyInMXN(pokemon, "MXN")}
+                      disabled={budget < pokemon.firstPrice.price}
+                      className={`w-full text-white font-semibold py-2 rounded-lg text-sm tracking-wider mb-2 ${
+                        pokemon.firstPrice.price > budget
+                          ? "bg-[#999999]"
+                          : "bg-gradient-to-r from-[#739443] to-[#6fb312]"
+                      }`}
+                    >
+                      {pokemon.firstPrice.price > budget
+                        ? "Dinero insuficiente"
+                        : "Comprar en MXN"}
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleBuyInForEx(pokemon, pokemon.secondPrice.currency)
+                      }
+                      disabled={budget < pokemon.secondPrice.price}
+                      className={`w-full text-white font-semibold py-2 rounded-lg text-sm tracking-wider ${
+                        pokemon.secondPrice.price > budget
+                          ? "bg-[#999999]"
+                          : "bg-gradient-to-r from-[#739443] to-[#6fb312]"
+                      }`}
+                    >
+                      {pokemon.secondPrice.price > budget
+                        ? "Dinero insuficiente"
+                        : `Comprar en ${pokemon.secondPrice.currency}`}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -157,7 +245,7 @@ const PokemonStore = () => {
           Cargar más
         </button>
       </div>
-    </div>
+    </section>
   );
 };
 
